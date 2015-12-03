@@ -87,10 +87,9 @@ public class ZipMojo extends AbstractMojo {
 
         FileOutputStream dest = null;
         try {
-            int BUFFER = 2014;
+            int BUFFER = 4096;
             dest = new FileOutputStream(zip_path);
             ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
-            //out.setMethod(ZipOutputStream.DEFLATED);
             byte data[] = new byte[BUFFER];
             
             FileInputStream fi = new FileInputStream(new File(jar_artifact_path));
@@ -116,8 +115,12 @@ public class ZipMojo extends AbstractMojo {
             modified_project.writeModel(new OutputStreamWriter(out));
             
             out.close();
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             Logger.getLogger(ZipMojo.class.getName()).log(Level.SEVERE, null, ex);
+            
+        } catch (CloneNotSupportedException ex) {
+            Logger.getLogger(ZipMojo.class.getName()).log(Level.SEVERE, null, ex);
+            
         } finally {
             try {
                 dest.close();
