@@ -32,11 +32,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
@@ -48,43 +45,15 @@ import org.apache.maven.project.MavenProject;
  * 
  */
 
-public class ZipMojo extends AbstractMojo {
-
-    /**
-     * @parameter default-value="${project}"
-     * @readonly
-     */
-    private MavenProject project;
-
-    private String version;
-    private String organization;
-    private String repo;
+public class ZipMojo extends AbstractSparkPackageMojo {
 
     /**
      *
      * @throws MojoExecutionException
      * @throws MojoFailureException"
      */
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void _execute() throws MojoExecutionException, MojoFailureException {
         
-        getLog().info("Project version: " + project.getVersion());
-        this.version = project.getVersion();
-        String github_url = project.getScm().getUrl();
-        getLog().info("Project github URL: " + github_url);
-        Pattern pattern = Pattern.compile(":(.+)\\/(.+)\\.git");
-        Matcher matcher = pattern.matcher(github_url);
-        if (!matcher.find()) {
-            getLog().error("Could not find GitHub organization/repo in your versioning URL");
-        }
-        organization = matcher.group(1);
-        repo = matcher.group(2);
-        //getLog().info("Artifact file: " + project.getArtifact().getFile().getAbsolutePath());
-        String jar_artifact_path = project.getBuild().getDirectory() + "/" + project.getArtifactId() + "-" + version + ".jar";
-        getLog().info("JAR file: " + jar_artifact_path);
-        
-        String zip_path = project.getBuild().getDirectory() + "/" + repo + "-" + version + ".zip";
-        getLog().info("ZIP file: " + zip_path);
-
         FileOutputStream dest = null;
         try {
             int BUFFER = 4096;
@@ -92,7 +61,7 @@ public class ZipMojo extends AbstractMojo {
             ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
             byte data[] = new byte[BUFFER];
             
-            FileInputStream fi = new FileInputStream(new File(jar_artifact_path));
+            FileInputStream fi = new FileInputStream(new File(jar_path));
             BufferedInputStream origin = new BufferedInputStream(fi, BUFFER);
             
             ZipEntry entry = new ZipEntry(repo + "-" + version + ".jar");
@@ -103,11 +72,9 @@ public class ZipMojo extends AbstractMojo {
             }
             origin.close();
             
-            
             MavenProject modified_project = (MavenProject) project.clone();
             modified_project.setArtifactId(repo);
             modified_project.setGroupId(organization);
-            
             
             entry = new ZipEntry(repo + "-" + version + ".pom");
             out.putNextEntry(entry);
@@ -128,7 +95,6 @@ public class ZipMojo extends AbstractMojo {
                 Logger.getLogger(ZipMojo.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
     }
 
 }

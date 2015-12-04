@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
-    <groupId>info.debatty</groupId>
-    <artifactId>sparkpackage-maven-plugin-test-1</artifactId>
+    <groupId>foo</groupId>
+    <artifactId>test-001</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -29,9 +29,9 @@
     </developers>
     
     <scm>
-        <connection>scm:git:git@github.com:tdebatty/spark-knn-graphs.git</connection>
-        <developerConnection>scm:git:git@github.com:tdebatty/spark-knn-graphs.git</developerConnection>
-        <url>git@github.com:tdebatty/spark-knn-graphs.git</url>
+        <connection>scm:git:git@github.com:foo/bar.git</connection>
+        <developerConnection>scm:git:git@github.com:foo/bar.git</developerConnection>
+        <url>git@github.com:foo/bar.git</url>
         <tag>HEAD</tag>
     </scm>
   
@@ -40,7 +40,7 @@
             <plugin>
                 <groupId>info.debatty</groupId>
                 <artifactId>sparkpackage-maven-plugin</artifactId>
-                <version>0.1</version>
+                <version>0.2-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

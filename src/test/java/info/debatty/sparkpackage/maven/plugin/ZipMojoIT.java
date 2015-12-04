@@ -31,9 +31,9 @@ import org.apache.maven.it.Verifier;
  *
  * @author Thibault Debatty
  */
-public class ZipMojoTest extends TestCase {
+public class ZipMojoIT extends TestCase {
     
-    public ZipMojoTest(String testName) {
+    public ZipMojoIT(String testName) {
         super(testName);
     }
     
@@ -54,6 +54,7 @@ public class ZipMojoTest extends TestCase {
     public void testExecute() throws Exception {
         Verifier verifier  = new Verifier(getClass().getClassLoader().getResource("test-1").getPath());
         verifier.executeGoal( "package" );
+        verifier.assertFilePresent("target/bar-0.1-SNAPSHOT.zip");
+        //verifier.assertArtifactPresent("foo", "test-001", "0.1-SNAPSHOT", "zip");
     }
-    
 }
