@@ -125,7 +125,7 @@
                     </execution>
                     
                     <execution>
-                        <id>pre-integration-cp</id>
+                        <id>pre-integration-cp-jar</id>
                         <phase>pre-integration-test</phase>
                         <goals>
                             <goal>exec</goal>
@@ -135,7 +135,23 @@
                             <arguments>
                                 <argument>-f</argument>
                                 <argument>${project.build.directory}/${project.build.finalName}.jar</argument>
-                                <argument>${env.HOME}/.m2/repository/info/debatty/sparkpackage-maven-plugin/${project.version}/${project.build.finalName}.jar</argument>
+                                <argument>${env.HOME}/.m2/repository/info/debatty/sparkpackage-maven-plugin/${project.version}/</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    
+                    <execution>
+                        <id>pre-integration-cp-pom</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>cp</executable>
+                            <arguments>
+                                <argument>-f</argument>
+                                <argument>${project.basedir}/pom.xml</argument>
+                                <argument>${env.HOME}/.m2/repository/info/debatty/sparkpackage-maven-plugin/${project.version}/${project.build.finalName}.pom</argument>
                             </arguments>
                         </configuration>
                     </execution>
