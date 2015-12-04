@@ -1,7 +1,7 @@
 # sparkpackage-maven-plugin
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/sparkpackage-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/sparkpackage-maven-plugin)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/info.debatty/sparkpackage-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/info.debatty/sparkpackage-maven-plugin) [![Build Status](https://travis-ci.org/tdebatty/sparkpackage-maven-plugin.svg?branch=master)](https://travis-ci.org/tdebatty/sparkpackage-maven-plugin)
 
-Maven plugin for publishing on spark-packages.org
+Maven plugin for publishing your spark projects on spark-packages.org.
 
 
 ## Installation
