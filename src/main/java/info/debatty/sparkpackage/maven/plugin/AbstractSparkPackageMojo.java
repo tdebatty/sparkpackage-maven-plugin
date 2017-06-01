@@ -27,8 +27,8 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 /**
@@ -37,51 +37,61 @@ import org.apache.maven.project.MavenProject;
  */
 abstract class AbstractSparkPackageMojo extends AbstractMojo {
 
-    /**
-     * @parameter default-value="${project}"
-     * @readonly
-     */
-    protected MavenProject project;
+    @Parameter(defaultValue = "${project}")
+    private MavenProject project;
 
-    protected String version;
+    @Parameter(defaultValue = "${project.version}")
+    protected String version = "";
     protected String organization;
     protected String repo;
     protected String jar_path;
     protected String zip_path;
-    
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        
-        version = project.getVersion();
+
+    public MavenProject getProject() {
+        return project;
+    }
+
+    @Override
+    public void execute() throws MojoFailureException {
+
+        //version = project.getVersion();
         getLog().info("Project version: " + version);
-        
+
+        parseOranizationAndRepo();
+
+        jar_path = project.getBuild().getDirectory() + "/"
+                + project.getArtifactId() + "-" + version + ".jar";
+        File file = new File(jar_path);
+        if (!file.exists()) {
+            throw new MojoFailureException(
+                    "Jar file " + jar_path + " not found!");
+        }
+        getLog().info("JAR file: " + jar_path);
+
+        zip_path = project.getBuild().getDirectory() + "/" + repo
+                + "-" + version + ".zip";
+        getLog().info("ZIP file: " + zip_path);
+
+        realexe();
+    }
+
+    public abstract void realexe() throws MojoFailureException;
+
+    void parseOranizationAndRepo() throws MojoFailureException {
         if (project.getScm() == null) {
             throw new MojoFailureException("Your pom.xml has no scm section!");
         }
-        
+
         String github_url = project.getScm().getUrl();
         getLog().info("Project github URL: " + github_url);
         Pattern pattern = Pattern.compile("github\\.com:(.+)\\/(.+)\\.git");
         Matcher matcher = pattern.matcher(github_url);
         if (!matcher.find()) {
-            throw new MojoFailureException("Could not find GitHub organization/repo in your versioning URL");
+            throw new MojoFailureException(
+                    "Could not find GitHub organization/repo in your "
+                            + "versioning URL");
         }
         organization = matcher.group(1);
         repo = matcher.group(2);
-        
-        jar_path = project.getBuild().getDirectory() + "/" + project.getArtifactId() + "-" + version + ".jar";
-        File file = new File(jar_path);
-        if (!file.exists()) {
-            throw new MojoFailureException("Jar file " + jar_path + " not found!");
-        }
-        getLog().info("JAR file: " + jar_path);
-        
-        zip_path = project.getBuild().getDirectory() + "/" + repo + "-" + version + ".zip";
-        getLog().info("ZIP file: " + zip_path);
-        
-        _execute();
     }
-    
-    public abstract void _execute() throws MojoExecutionException, MojoFailureException;
-            
-    
 }

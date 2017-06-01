@@ -21,40 +21,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package info.debatty.sparkpackage.maven.plugin;
 
 import junit.framework.TestCase;
+import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
 /**
  *
  * @author Thibault Debatty
  */
 public class ZipMojoIT extends TestCase {
-    
-    public ZipMojoIT(String testName) {
-        super(testName);
-    }
-    
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-    
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
 
     /**
      * Test of execute method, of class ZipMojo.
-     * @throws java.lang.Exception
+     *
+     * @throws org.apache.maven.it.VerificationException if ??
      */
-    public void testExecute() throws Exception {
-        Verifier verifier  = new Verifier(getClass().getClassLoader().getResource("test-1").getPath());
-        verifier.executeGoal( "package" );
+    public final void testExecute() throws VerificationException {
+
+        System.out.println(System.getProperty("buildDirectory"));
+        System.out.println(System.getProperty("version"));
+
+        Verifier verifier = new Verifier(
+                getClass().getClassLoader().getResource("it-001").getPath());
+
+
+        MavenXpp3Reader pom_reader = new MavenXpp3Reader();
+        //Model model = pomReader.read(ReaderFactory.newXmlReader(new File(
+        //)));
+
+        verifier.executeGoal("sparkpackage:zip");
         verifier.assertFilePresent("target/bar-0.1-SNAPSHOT.zip");
-        //verifier.assertArtifactPresent("foo", "test-001", "0.1-SNAPSHOT", "zip");
     }
 }

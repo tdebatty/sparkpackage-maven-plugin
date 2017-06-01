@@ -27,74 +27,81 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
 
 /**
  *
  * @author Thibault Debatty
- * @goal zip
- * 
  */
-
+@Mojo(name = "zip")
 public class ZipMojo extends AbstractSparkPackageMojo {
+
+    private static final int BUFFER = 4096;
 
     /**
      *
-     * @throws MojoExecutionException
-     * @throws MojoFailureException"
+     * @throws MojoFailureException if we could not create the ZIP file
      */
-    public void _execute() throws MojoExecutionException, MojoFailureException {
-        
+    @Override
+    public final void realexe()
+            throws MojoFailureException {
+
+        super.execute();
+
         FileOutputStream dest = null;
         try {
-            int BUFFER = 4096;
             dest = new FileOutputStream(zip_path);
-            ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
-            byte data[] = new byte[BUFFER];
-            
-            FileInputStream fi = new FileInputStream(new File(jar_path));
-            BufferedInputStream origin = new BufferedInputStream(fi, BUFFER);
-            
-            ZipEntry entry = new ZipEntry(repo + "-" + version + ".jar");
-            out.putNextEntry(entry);
+        } catch (FileNotFoundException ex) {
+            throw new MojoFailureException(
+                    "Could not open destination zip file", ex);
+        }
+
+        ZipOutputStream out = new ZipOutputStream(
+                new BufferedOutputStream(dest));
+        byte[] data = new byte[BUFFER];
+
+        FileInputStream fi;
+        try {
+            fi = new FileInputStream(new File(jar_path));
+        } catch (FileNotFoundException ex) {
+            throw new MojoFailureException("Could not open target jar", ex);
+        }
+        BufferedInputStream origin = new BufferedInputStream(fi, BUFFER);
+
+        ZipEntry jar_entry = new ZipEntry(repo + "-" + version + ".jar");
+        try {
+            out.putNextEntry(jar_entry);
             int count;
             while ((count = origin.read(data, 0, BUFFER)) != -1) {
                 out.write(data, 0, count);
             }
             origin.close();
-            
-            MavenProject modified_project = (MavenProject) project.clone();
-            modified_project.setArtifactId(repo);
-            modified_project.setGroupId(organization);
-            
-            entry = new ZipEntry(repo + "-" + version + ".pom");
-            out.putNextEntry(entry);
-            
-            modified_project.writeModel(new OutputStreamWriter(out));
-            
-            out.close();
         } catch (IOException ex) {
-            Logger.getLogger(ZipMojo.class.getName()).log(Level.SEVERE, null, ex);
-            
-        } catch (CloneNotSupportedException ex) {
-            Logger.getLogger(ZipMojo.class.getName()).log(Level.SEVERE, null, ex);
-            
-        } finally {
-            try {
-                dest.close();
-            } catch (IOException ex) {
-                Logger.getLogger(ZipMojo.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            throw new MojoFailureException("Could not write jar to ZIP", ex);
+        }
+
+        MavenProject modified_project;
+        modified_project = (MavenProject) getProject().clone();
+
+        modified_project.setArtifactId(repo);
+        modified_project.setGroupId(organization);
+
+        ZipEntry pom_entry = new ZipEntry(repo + "-" + version + ".pom");
+        try {
+            out.putNextEntry(pom_entry);
+            modified_project.writeModel(new OutputStreamWriter(out));
+            out.close();
+            dest.close();
+        } catch (IOException ex) {
+            throw new MojoFailureException("Could add POM to ZIP", ex);
         }
     }
-
 }
