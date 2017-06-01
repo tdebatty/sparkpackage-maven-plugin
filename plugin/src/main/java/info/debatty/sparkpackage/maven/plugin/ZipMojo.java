@@ -54,8 +54,6 @@ public class ZipMojo extends AbstractSparkPackageMojo {
     public final void realexe()
             throws MojoFailureException {
 
-        super.execute();
-
         FileOutputStream dest = null;
         try {
             dest = new FileOutputStream(zip_path);

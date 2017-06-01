@@ -23,10 +23,12 @@
  */
 package info.debatty.sparkpackage.maven.plugin;
 
+import java.io.File;
+import java.io.IOException;
 import junit.framework.TestCase;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.it.util.ResourceExtractor;
 
 /**
  *
@@ -39,20 +41,24 @@ public class ZipMojoIT extends TestCase {
      *
      * @throws org.apache.maven.it.VerificationException if ??
      */
-    public final void testExecute() throws VerificationException {
+    public final void testExecute() throws VerificationException, IOException {
 
         System.out.println(System.getProperty("buildDirectory"));
         System.out.println(System.getProperty("version"));
 
-        Verifier verifier = new Verifier(
-                getClass().getClassLoader().getResource("it-001").getPath());
+        File testDir = ResourceExtractor.simpleExtractResources( getClass(), "/it-001" );
+        Verifier verifier = new Verifier( testDir.getAbsolutePath() );
+        //verifier.setMavenDebug(true);
 
-
-        MavenXpp3Reader pom_reader = new MavenXpp3Reader();
-        //Model model = pomReader.read(ReaderFactory.newXmlReader(new File(
-        //)));
-
+        verifier.setAutoclean(false);
+        verifier.executeGoal("package");
         verifier.executeGoal("sparkpackage:zip");
         verifier.assertFilePresent("target/bar-0.1-SNAPSHOT.zip");
+        verifier.verifyErrorFreeLog();
+
+        verifier.resetStreams();
+
+        verifier.executeGoal("sparkpackage:publish");
+        verifier.verifyErrorFreeLog();
     }
 }

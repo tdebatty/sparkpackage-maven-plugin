@@ -124,13 +124,7 @@
             <scope>test</scope>
         </dependency>
         -->
-        <dependency>
-            <groupId>org.apache.maven.shared</groupId>
-            <artifactId>maven-verifier</artifactId>
-            <version>1.2</version>
-            <scope>test</scope>
-            <type>jar</type>
-        </dependency>
+
     </dependencies>
 
     <build>
@@ -155,27 +149,7 @@
                 </executions>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19</version>
-
-                <configuration>
-                    <systemPropertyVariables>
-                        <buildDirectory>${project.build.directory}</buildDirectory>
-                        <version>${project.version}</version>
-                    </systemPropertyVariables>
-                </configuration>
-
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            
 
             <!--
             <plugin>
