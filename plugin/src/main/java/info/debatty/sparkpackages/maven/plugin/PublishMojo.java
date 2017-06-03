@@ -22,14 +22,18 @@
  * THE SOFTWARE.
  */
 
-package info.debatty.sparkpackage.maven.plugin;
+package info.debatty.sparkpackages.maven.plugin;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.io.InputStreamReader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.HttpClient;
@@ -55,30 +59,15 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 @Mojo(name = "publish")
 public class PublishMojo extends AbstractSparkPackageMojo {
 
-            /*
-        'Apache-2.0' => 0,
-    'BSD 3-Clause' => 1,
-    'BSD 2-Clause' => 2,
-    'GPL-2.0' => 3,
-    'GPL-3.0' => 4,
-    'LGPL-2.1' => 6,
-    'LGPL-3.0' => 7,
-    'MIT' => 8,
-    'MPL-2.0' => 9,
-    'EPL-1.0' => 10
-        */
-    private static final HashMap<String, Integer> LICENCES =
-            new HashMap<String, Integer>();
+    private static final String[] LICENCES = new String[]{
+        "Apache-2.0", "BSD 3-Clause", "BSD 2-Clause", "GPL-2.0", "GPL-3.0",
+        "LGPL-2.1", "LGPL-3.0", "MIT", "MPL-2.0", "EPL-1.0"};
 
 
     @Override
     public final void realexe() throws MojoFailureException {
 
-        HttpClient httpclient = HttpClientBuilder.create().build();
-        HttpPost post = new HttpPost("http://localhost/tests/spark-server.php");
-
-        File zip_file = new File(this.zip_path);
-
+        File zip_file = new File(getZipPath());
         byte[] zip_base64 = null;
         try {
             zip_base64 = Base64.encodeBase64(
@@ -88,10 +77,74 @@ public class PublishMojo extends AbstractSparkPackageMojo {
             throw new MojoFailureException("Error!",  ex);
         }
 
-        Repository git_repository = null;
+        HttpEntity request = MultipartEntityBuilder.create()
+                .addBinaryBody(
+                        "artifact_zip",
+                        zip_base64,
+                        ContentType.APPLICATION_OCTET_STREAM,
+                        "artifact_zip")
+                .addTextBody("version", getVersion())
+                .addTextBody("license_id", getLicenseId())
+                .addTextBody("git_commit_sha1", getGitCommit())
+                .addTextBody("name", getOrganization() + "/" + getRepo())
+                .build();
+
+        HttpPost post = new HttpPost(getSparkpackagesUrl());
+        post.setEntity(request);
+
+        post.setHeader(
+                "Authorization",
+                getAuthorizationHeader());
+
+        getLog().info("Executing request " + post.getRequestLine());
+
+        // .setProxy(new HttpHost("127.0.0.1", 8888))
+        HttpClient httpclient = HttpClientBuilder.create().build();
+        HttpResponse response = null;
+        try {
+            response = httpclient.execute(post);
+        } catch (IOException ex) {
+            throw new MojoFailureException(
+                    "Failed to perform HTTP request", ex);
+        }
+        getLog().info("Server responded " + response.getStatusLine());
+
+        HttpEntity response_content = response.getEntity();
+        if (response_content == null) {
+            throw new MojoFailureException(
+                    "Server responded with an empty response");
+        }
+
+        StringBuilder sb = new StringBuilder();
+        String line;
+        BufferedReader br;
+        try {
+            br = new BufferedReader(
+                    new InputStreamReader(response_content.getContent()));
+
+            while ((line = br.readLine()) != null) {
+                    sb.append(line);
+            }
+        } catch (IOException | UnsupportedOperationException ex) {
+            throw new MojoFailureException("Could not read response...", ex);
+        }
+        System.out.println(sb.toString());
+
+        try {
+            System.out.println(EntityUtils.toString(response_content));
+        } catch (IOException | ParseException ex) {
+
+        }
+    }
+
+    final String getGitCommit() throws MojoFailureException {
+              Repository git_repository = null;
         try {
             git_repository = new FileRepositoryBuilder()
-                    .setGitDir(new File(getProject().getBasedir().getAbsolutePath()))
+                    .setMustExist(true)
+                    .findGitDir(
+                            new File(
+                                    getProject().getBasedir().getAbsolutePath()))
                     .build();
         } catch (IOException ex) {
             throw new MojoFailureException("GIT repo not found!", ex);
@@ -103,68 +156,37 @@ public class PublishMojo extends AbstractSparkPackageMojo {
             resolve = git_repository.resolve("HEAD");
         } catch (IncorrectObjectTypeException ex) {
             throw new MojoFailureException("GIT error!", ex);
-        } catch (RevisionSyntaxException ex) {
-            throw new MojoFailureException("GIT error!", ex);
-        } catch (IOException ex) {
+        } catch (RevisionSyntaxException | IOException ex) {
             throw new MojoFailureException("GIT error!", ex);
         }
 
-        //System.out.println(resolve.toString());
+        return resolve.getName();
+    }
+
+    final String getLicenseId() throws MojoFailureException {
         for (Object license_object : getProject().getLicenses()) {
             License license = (License) license_object;
-            System.out.println(license.getName());
+            String license_name = license.getName();
+
+            for (int i = 0; i < LICENCES.length; i++) {
+                if (license_name.equalsIgnoreCase(LICENCES[i])) {
+                    return String.valueOf(i);
+                }
+            }
         }
 
-        // resolve.getName();
+        throw new MojoFailureException("Could not find a supported licence");
+    }
 
-        HttpEntity request = MultipartEntityBuilder.create()
-                .addBinaryBody(
-                        "artifact_zip",
-                        zip_base64,
-                        ContentType.APPLICATION_OCTET_STREAM,
-                        "artifact_zip")
-                .addTextBody("version", this.version)
-                .addTextBody("license_id", "7")
-                .addTextBody("git_commit_sha1", "123")
-                .addTextBody("name", this.organization + "/" + this.repo)
-                .build();
-
-        post.setEntity(request);
-
-        String username = "tdebatty";
-        String token = "58b7ae352cd3046b31e1e53182f1292c7575a88c";
-
-        post.setHeader(
-                "Authorization",
-                "Basic: "
-                        + Base64.encodeBase64String(
-                                (username + ":" + token).getBytes()));
-
-        System.out.println("executing request " + post.getRequestLine());
-
-        HttpResponse response = null;
-        try {
-            response = httpclient.execute(post);
-        } catch (IOException ex) {
+    final String getAuthorizationHeader() throws MojoFailureException {
+        if (getUsername() == null || getToken() == null
+                || getUsername().isEmpty() || getToken().isEmpty()) {
             throw new MojoFailureException(
-                    "Failed to perform HTTP request", ex);
-        }
-        System.out.println(response.getStatusLine());
-
-        HttpEntity response_content = response.getEntity();
-
-
-        if (response_content == null) {
-            throw new MojoFailureException(
-                    "Server responded with an empty response");
+                    "Username and/or token are not defined");
         }
 
-        try {
-            System.out.println(EntityUtils.toString(response_content));
-        } catch (IOException ex) {
-
-        } catch (ParseException ex) {
-
-        }
+        return "Basic "
+                + Base64.encodeBase64String(
+                        (getUsername() + ":" + getToken()).getBytes());
     }
 }

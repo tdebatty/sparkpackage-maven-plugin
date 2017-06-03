@@ -2,11 +2,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>info.debatty</groupId>
-    <artifactId>sparkpackage-maven-plugin</artifactId>
+    <artifactId>sparkpackages-maven-plugin</artifactId>
     <version>0.2-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
-    <name>sparkpackage-maven-plugin</name>
+    <name>sparkpackages-maven-plugin</name>
     <url>https://github.com/tdebatty/sparkpackage-maven-plugin</url>
     <description>Maven plugin to publish on sparkpackages.org</description>
 
@@ -149,7 +149,7 @@
                 </executions>
             </plugin>
 
-            
+
 
             <!--
             <plugin>

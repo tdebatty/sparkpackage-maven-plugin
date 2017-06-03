@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package info.debatty.sparkpackage.maven.plugin;
+package info.debatty.sparkpackages.maven.plugin;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -56,7 +56,7 @@ public class ZipMojo extends AbstractSparkPackageMojo {
 
         FileOutputStream dest = null;
         try {
-            dest = new FileOutputStream(zip_path);
+            dest = new FileOutputStream(getZipPath());
         } catch (FileNotFoundException ex) {
             throw new MojoFailureException(
                     "Could not open destination zip file", ex);
@@ -68,13 +68,14 @@ public class ZipMojo extends AbstractSparkPackageMojo {
 
         FileInputStream fi;
         try {
-            fi = new FileInputStream(new File(jar_path));
+            fi = new FileInputStream(new File(getJarPath()));
         } catch (FileNotFoundException ex) {
-            throw new MojoFailureException("Could not open target jar", ex);
+            throw new MojoFailureException("Could not read JAR", ex);
         }
         BufferedInputStream origin = new BufferedInputStream(fi, BUFFER);
 
-        ZipEntry jar_entry = new ZipEntry(repo + "-" + version + ".jar");
+        ZipEntry jar_entry = new ZipEntry(
+                getRepo() + "-" + getVersion() + ".jar");
         try {
             out.putNextEntry(jar_entry);
             int count;
@@ -83,16 +84,17 @@ public class ZipMojo extends AbstractSparkPackageMojo {
             }
             origin.close();
         } catch (IOException ex) {
-            throw new MojoFailureException("Could not write jar to ZIP", ex);
+            throw new MojoFailureException("Could not add JAR to ZIP", ex);
         }
 
         MavenProject modified_project;
         modified_project = (MavenProject) getProject().clone();
 
-        modified_project.setArtifactId(repo);
-        modified_project.setGroupId(organization);
+        modified_project.setArtifactId(getRepo());
+        modified_project.setGroupId(getOrganization());
 
-        ZipEntry pom_entry = new ZipEntry(repo + "-" + version + ".pom");
+        ZipEntry pom_entry = new ZipEntry(
+                getRepo() + "-" + getVersion() + ".pom");
         try {
             out.putNextEntry(pom_entry);
             modified_project.writeModel(new OutputStreamWriter(out));

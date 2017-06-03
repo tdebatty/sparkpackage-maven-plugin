@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package info.debatty.sparkpackage.maven.plugin;
+package info.debatty.sparkpackages.maven.plugin;
 
 import java.io.File;
 import java.util.regex.Matcher;
@@ -40,37 +40,79 @@ abstract class AbstractSparkPackageMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}")
     private MavenProject project;
 
-    @Parameter(defaultValue = "${project.version}")
-    protected String version = "";
-    protected String organization;
-    protected String repo;
-    protected String jar_path;
-    protected String zip_path;
+    @Parameter(property = "url",
+        defaultValue = "http://spark-packages.org/api/submit-release")
+    private String url;
 
-    public MavenProject getProject() {
+    /**
+     * Github username.
+     */
+    @Parameter(property = "username", defaultValue = "")
+    private String username;
+
+    /**
+     * Github Personal Access Token with at least "read:org" permissions.
+     * https://help.github.com/articles/creating-a-personal-access-token-for-the
+     * -command-line/
+     */
+    @Parameter(property = "token", defaultValue = "")
+    private String token;
+
+    private String version = "";
+    private String organization;
+    private String repo;
+    private String jar_path;
+    private String zip_path;
+
+    public final MavenProject getProject() {
         return project;
+    }
+
+    public final String getVersion() {
+        return version;
+    }
+
+    public final String getOrganization() {
+        return organization;
+    }
+
+    public final String getRepo() {
+        return repo;
+    }
+
+    public final String getJarPath() {
+        return jar_path;
+    }
+
+    public final String getZipPath() {
+        return zip_path;
+    }
+
+    public final String getUsername() {
+        return username;
+    }
+
+    public final String getToken() {
+        return token;
+    }
+
+
+
+    /**
+     * Return the sparkpackages_url (that may be defined in the pom).
+     * @return
+     */
+    public final String getSparkpackagesUrl() {
+        return url;
     }
 
     @Override
     public void execute() throws MojoFailureException {
 
-        //version = project.getVersion();
-        getLog().info("Project version: " + version);
-
+        parseVersion();
         parseOranizationAndRepo();
-
-        jar_path = project.getBuild().getDirectory() + "/"
-                + project.getArtifactId() + "-" + version + ".jar";
-        File file = new File(jar_path);
-        if (!file.exists()) {
-            throw new MojoFailureException(
-                    "Jar file " + jar_path + " not found!");
-        }
-        getLog().info("JAR file: " + jar_path);
-
-        zip_path = project.getBuild().getDirectory() + "/" + repo
-                + "-" + version + ".zip";
-        getLog().info("ZIP file: " + zip_path);
+        parseJarPath();
+        parseZipPath();
 
         realexe();
     }
@@ -93,5 +135,27 @@ abstract class AbstractSparkPackageMojo extends AbstractMojo {
         }
         organization = matcher.group(1);
         repo = matcher.group(2);
+    }
+
+    void parseJarPath() throws MojoFailureException {
+        jar_path = project.getBuild().getDirectory() + "/"
+                + project.getArtifactId() + "-" + version + ".jar";
+        File file = new File(jar_path);
+        if (!file.exists()) {
+            throw new MojoFailureException(
+                    "Jar file " + jar_path + " not found!");
+        }
+        getLog().info("JAR file: " + jar_path);
+    }
+
+    void parseVersion() {
+        version = project.getVersion();
+        getLog().info("Project version: " + version);
+    }
+
+    void parseZipPath() {
+        zip_path = project.getBuild().getDirectory() + "/" + repo
+                + "-" + version + ".zip";
+        getLog().info("ZIP file: " + zip_path);
     }
 }
